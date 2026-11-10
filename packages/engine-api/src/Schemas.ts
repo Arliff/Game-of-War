@@ -14,6 +14,7 @@ import {
   Quads,
   RankedType,
   Trios,
+  ResearchType,
   UnitType,
 } from "./game/GameTypes";
 import { PlayerStatsSchema } from "./StatsSchemas";
@@ -46,7 +47,8 @@ export type Intent =
   | KickPlayerIntent
   | TogglePauseIntent
   | UpdateGameConfigIntent
-  | ToggleGameStartTimer;
+  | ToggleGameStartTimer
+  | ResearchIntent;
 
 export type AttackIntent = z.infer<typeof AttackIntentSchema>;
 export type CancelAttackIntent = z.infer<typeof CancelAttackIntentSchema>;
@@ -342,6 +344,9 @@ export const GameConfigSchema = z.object({
   // Stripped from gameStartInfo and from the advertised lobby config: sibling
   // ids are private lobby ids, which are join secrets.
   pool: PoolConfigSchema.optional(),
+  // Research mode: human players unlock structures and troop upgrades at a
+  // Research Lab (engine-lib/game/Research.ts). Off unless set.
+  research: z.boolean().optional(),
 });
 
 // What a host sends in update_game_config. maxPlayers is the private-lobby
@@ -567,6 +572,12 @@ export const ToggleGameStartTimerIntentSchema = z.object({
   type: z.literal("toggle_game_start_timer"),
 });
 
+export const ResearchIntentSchema = z.object({
+  type: z.literal("research"),
+  research: z.enum(ResearchType),
+});
+export type ResearchIntent = z.infer<typeof ResearchIntentSchema>;
+
 export const IntentSchema = z.discriminatedUnion("type", [
   AttackIntentSchema,
   CancelAttackIntentSchema,
@@ -593,6 +604,7 @@ export const IntentSchema = z.discriminatedUnion("type", [
   TogglePauseIntentSchema,
   UpdateGameConfigIntentSchema,
   ToggleGameStartTimerIntentSchema,
+  ResearchIntentSchema,
 ]);
 
 // StampedIntent = Intent with server-stamped clientID (used in turns and execution)

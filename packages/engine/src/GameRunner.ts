@@ -362,6 +362,9 @@ export class GameRunner {
       canSendEmojiAllPlayers: player.canSendEmoji(AllPlayers),
       canEmbargoAll: player.canEmbargoAll(),
     } as PlayerActions;
+    if (this.game.config().researchEnabled()) {
+      actions.research = player.researchStatus();
+    }
 
     if (tile !== null && this.game.hasOwner(tile)) {
       const other = this.game.owner(tile) as Player;

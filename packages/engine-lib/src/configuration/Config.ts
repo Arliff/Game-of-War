@@ -177,10 +177,17 @@ export class Config {
   }
 
   isUnitDisabled(unitType: UnitType): boolean {
+    // Research Labs only exist in research games.
+    if (unitType === UnitType.ResearchLab && !this.researchEnabled()) {
+      return true;
+    }
     return this._gameConfig.disabledUnits?.includes(unitType) ?? false;
   }
   instantBuild(): boolean {
     return this._gameConfig.instantBuild;
+  }
+  researchEnabled(): boolean {
+    return this._gameConfig.research ?? false;
   }
   disableAlliances(): boolean {
     // customAllianceDuration === 0 disables alliances (the "custom alliances"
@@ -237,6 +244,12 @@ export class Config {
           constructionDuration: this.instantBuild()
             ? 0
             : SAM_CONSTRUCTION_TICKS,
+          upgradable: true,
+        };
+        break;
+      case UnitType.ResearchLab:
+        info = {
+          constructionDuration: this.instantBuild() ? 0 : 10 * 10,
           upgradable: true,
         };
         break;

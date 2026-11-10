@@ -4,6 +4,7 @@ import {
   Gold,
   PlayerInfo,
   PlayerType,
+  ResearchType,
   TerrainType,
   TerraNullius,
   Tick,
@@ -15,6 +16,11 @@ import { NukeType } from "@openfront/engine-api/StatsSchemas";
 import { Config } from "@openfront/engine-lib/configuration/Config";
 import { exp, log, pow2 } from "@openfront/engine-lib/DetMath";
 import {
+  attackLossMultiplier,
+  defenseLossMultiplier,
+  researchDefinition,
+} from "@openfront/engine-lib/game/Research";
+import {
   assertNever,
   sigmoid,
   toInt,
@@ -25,7 +31,12 @@ import type { EngineUnitInfo, Game, Player, Unit } from "../game/Game";
 export interface AttackLogicInput {
   terrain: TerrainType;
   attackTroops: number;
-  attacker: { type: PlayerType; numTiles: number };
+  attacker: {
+    type: PlayerType;
+    numTiles: number;
+    /** Weapons research level (0-3); cuts the attacker's losses. */
+    weaponsLevel?: number;
+  };
   /** null when attacking terra nullius. */
   defender: {
     type: PlayerType;
@@ -34,6 +45,8 @@ export interface AttackLogicInput {
     isTraitor: boolean;
     /** Defender is disconnected and on the attacker's team. */
     isDisconnectedTeammate: boolean;
+    /** Armor research level (0-3); raises the attacker's losses. */
+    armorLevel?: number;
   } | null;
   /** A defense post owned by the defender is in range of the tile. */
   defenderHasDefensePost: boolean;
@@ -395,6 +408,11 @@ export class EngineConfig extends Config {
           UnitType.Factory,
           UnitType.Port,
         );
+      case UnitType.ResearchLab:
+        return this.costWrapper(
+          (numUnits: number) => Math.min(1_000_000, pow2(numUnits) * 200_000),
+          UnitType.ResearchLab,
+        );
       case UnitType.TransportShip:
       case UnitType.Shell:
       case UnitType.SAMMissile:
@@ -405,6 +423,13 @@ export class EngineConfig extends Config {
       default:
         assertNever(type);
     }
+  }
+
+  researchCost(player: Player, type: ResearchType): Gold {
+    if (player.type() === PlayerType.Human && this.hasInfiniteGoldFor(player)) {
+      return 0n;
+    }
+    return researchDefinition(type).cost;
   }
 
   private hasInfiniteTroopsForInfo(playerInfo: PlayerInfo): boolean {
@@ -581,6 +606,10 @@ export class EngineConfig extends Config {
     );
 
     const traitorLossMod = defender.isTraitor ? this.traitorDefenseDebuff() : 1;
+    // Research: the attacker's Weapons and the defender's Armor.
+    const researchLossMod =
+      attackLossMultiplier(attacker.weaponsLevel ?? 0) *
+      defenseLossMultiplier(defender.armorLevel ?? 0);
     const traitorCostMod = defender.isTraitor ? this.traitorSpeedDebuff() : 1;
 
     // Defender loses its average troops-per-tile.
@@ -594,6 +623,7 @@ export class EngineConfig extends Config {
     const attackerTroopLoss =
       mag *
       traitorLossMod *
+      researchLossMod *
       within(troopRatio, CHEAPEST_TROOP_RATIO, 2) *
       (ATTACKER_LOSS_BASE * largeAttackerBonus * largeDefenderBonus +
         ATTACKER_LOSS_PER_DENSITY * defenderTroopLoss);

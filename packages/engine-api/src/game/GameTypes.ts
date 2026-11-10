@@ -208,6 +208,7 @@ export enum UnitType {
   MIRVWarhead = "MIRV Warhead",
   Train = "Train",
   Factory = "Factory",
+  ResearchLab = "Research Lab",
 }
 
 export enum TrainType {
@@ -237,6 +238,7 @@ export const Structures = unitTypeGroup([
   UnitType.MissileSilo,
   UnitType.Port,
   UnitType.Factory,
+  UnitType.ResearchLab,
 ] as const);
 
 export const BuildMenus = unitTypeGroup([
@@ -341,6 +343,8 @@ export interface PlayerActions {
   buildableUnits: BuildableUnit[];
   canSendEmojiAllPlayers: boolean;
   canEmbargoAll?: boolean;
+  /** Only set when the game has research enabled. */
+  research?: ResearchStatus;
   interaction?: PlayerInteraction;
 }
 
@@ -527,4 +531,46 @@ export function formatPlayerDisplayName(
   clanTag?: string | null,
 ): string {
   return clanTag ? `[${clanTag}] ${username}` : username;
+}
+
+// Research: techs a player unlocks at a Research Lab. Two kinds: unlocks
+// (allow building a structure) and military upgrades (troop strength). Only
+// in games with GameConfig.research enabled. The rules live in
+// engine-lib/game/Research.ts.
+export enum ResearchType {
+  Navigation = "Navigation",
+  Industry = "Industry",
+  Fortification = "Fortification",
+  Rocketry = "Rocketry",
+  AirDefense = "AirDefense",
+  Weapons1 = "Weapons1",
+  Weapons2 = "Weapons2",
+  Weapons3 = "Weapons3",
+  Armor1 = "Armor1",
+  Armor2 = "Armor2",
+  Armor3 = "Armor3",
+}
+
+export interface ActiveResearch {
+  type: ResearchType;
+  /** Progress points accumulated so far. */
+  progress: number;
+  /** Progress points needed to finish. */
+  required: number;
+}
+
+export interface ResearchOption {
+  type: ResearchType;
+  cost: Gold;
+  /** Prerequisites are done, not researched yet and nothing else running. */
+  canStart: boolean;
+  completed: boolean;
+}
+
+export interface ResearchStatus {
+  completed: ResearchType[];
+  active: ActiveResearch | null;
+  /** Progress points the player gains per tick (sum of finished lab levels). */
+  speed: number;
+  options: ResearchOption[];
 }

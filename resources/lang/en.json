@@ -209,6 +209,7 @@
       "mirv": "Huge explosion, only targets selected player",
       "missile_silo": "Used to launch nukes",
       "port": "Sends trade ships to generate gold",
+      "research_lab": "Researches technologies; more and bigger labs research faster",
       "sam_launcher": "Defends against incoming nukes",
       "warship": "Captures trade ships, destroys ships and boats"
     },
@@ -1087,6 +1088,7 @@
     "options": "Options",
     "overtime": "Overtime after (minutes)",
     "random_spawn": "Random spawn",
+    "research": "Research",
     "start": "Start Game",
     "starting": "Starting…",
     "starting_gold": "Starting Gold (Millions)",
@@ -2418,6 +2420,64 @@
     "body": "A person who you recently reported has been banned, thanks for keeping openfront a safer and more enjoyable place",
     "heading": "Thank you"
   },
+  "research": {
+    "air_defense": {
+      "desc": "Unlocks the SAM Launcher",
+      "name": "Air Defense"
+    },
+    "armor_1": {
+      "desc": "Attackers lose 10% more troops against you",
+      "name": "Armor I"
+    },
+    "armor_2": {
+      "desc": "Attackers lose 20% more troops against you",
+      "name": "Armor II"
+    },
+    "armor_3": {
+      "desc": "Attackers lose 30% more troops against you",
+      "name": "Armor III"
+    },
+    "done": "Done",
+    "fortification": {
+      "desc": "Unlocks the Defense Post",
+      "name": "Fortification"
+    },
+    "in_progress": "Researching",
+    "industry": {
+      "desc": "Unlocks the Factory",
+      "name": "Industry"
+    },
+    "military": "Troops",
+    "navigation": {
+      "desc": "Unlocks the Port",
+      "name": "Navigation"
+    },
+    "no_lab": "Build a Research Lab to research technologies.",
+    "paused": "Paused (no lab)",
+    "requires": "Requires: {research}",
+    "researching": "In progress",
+    "rocketry": {
+      "desc": "Unlocks the Missile Silo",
+      "name": "Rocketry"
+    },
+    "seconds_left": "{seconds}s left",
+    "speed": "Speed: {speed}/tick",
+    "start": "Research",
+    "title": "Research",
+    "unlocks": "Buildings",
+    "weapons_1": {
+      "desc": "Your attacks lose 10% fewer troops",
+      "name": "Weapons I"
+    },
+    "weapons_2": {
+      "desc": "Your attacks lose 20% fewer troops",
+      "name": "Weapons II"
+    },
+    "weapons_3": {
+      "desc": "Your attacks lose 30% fewer troops",
+      "name": "Weapons III"
+    }
+  },
   "reward_track": {
     "after_level": "After level {level}",
     "caps_amount": "{amount} Caps",
@@ -2859,6 +2919,7 @@
     "mirv": "MIRV",
     "missile_silo": "Missile Silo",
     "port": "Port",
+    "research_lab": "Research Lab",
     "sam_launcher": "SAM Launcher",
     "warship": "Warship"
   },
