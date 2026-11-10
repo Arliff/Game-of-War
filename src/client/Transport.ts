@@ -4,6 +4,7 @@ import {
   GameType,
   Gold,
   PlayerID,
+  ResearchType,
   Tick,
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
@@ -189,6 +190,10 @@ export class SendEmbargoAllIntentEvent implements GameEvent {
   constructor(public readonly action: "start" | "stop") {}
 }
 
+export class SendResearchIntentEvent implements GameEvent {
+  constructor(public readonly research: ResearchType) {}
+}
+
 export class SendDeleteUnitIntentEvent implements GameEvent {
   constructor(public readonly unitId: number) {}
 }
@@ -341,6 +346,9 @@ export class Transport {
     this.subscribe(SendEmbargoIntentEvent, (e) => this.onSendEmbargoIntent(e));
     this.subscribe(SendEmbargoAllIntentEvent, (e) =>
       this.onSendEmbargoAllIntent(e),
+    );
+    this.subscribe(SendResearchIntentEvent, (e) =>
+      this.sendIntent({ type: "research", research: e.research }),
     );
     this.subscribe(BuildUnitIntentEvent, (e) => this.onBuildUnitIntent(e));
 

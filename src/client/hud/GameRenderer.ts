@@ -44,6 +44,7 @@ import { PerformanceOverlay } from "./layers/PerformanceOverlay";
 import { PlayerInfoOverlay } from "./layers/PlayerInfoOverlay";
 import { PlayerPanel } from "./layers/PlayerPanel";
 import { ReplayPanel } from "./layers/ReplayPanel";
+import { ResearchPanel } from "./layers/ResearchPanel";
 import { SettingsModal } from "./layers/SettingsModal";
 import { SpawnTimer } from "./layers/SpawnTimer";
 import { TutorialPanel } from "./layers/TutorialPanel";
@@ -305,6 +306,15 @@ export function createRenderer(
   immunityTimer.game = game;
   immunityTimer.eventBus = eventBus;
 
+  const researchPanel = document.querySelector(
+    "research-panel",
+  ) as ResearchPanel;
+  if (!(researchPanel instanceof ResearchPanel)) {
+    console.error("research panel not found");
+  }
+  researchPanel.game = game;
+  researchPanel.eventBus = eventBus;
+
   const inGamePromo = document.querySelector("in-game-promo") as InGamePromo;
   if (!(inGamePromo instanceof InGamePromo)) {
     console.error("in-game promo not found");
@@ -367,6 +377,7 @@ export function createRenderer(
     ),
     spawnTimer,
     immunityTimer,
+    researchPanel,
     gameLeftSidebar,
     unitDisplay,
     gameRightSidebar,

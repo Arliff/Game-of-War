@@ -74,6 +74,11 @@ export function notableLobbySettings(
       label: translateText("game_settings.instant_build"),
       value: enabled,
     });
+  if (c.research)
+    items.push({
+      label: translateText("game_settings.research"),
+      value: enabled,
+    });
   if (c.randomSpawn)
     items.push({
       label: translateText("game_settings.random_spawn"),

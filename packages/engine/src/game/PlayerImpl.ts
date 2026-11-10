@@ -1,5 +1,6 @@
 import { TileRef } from "@openfront/engine-api/game/GameMap";
 import {
+  ActiveResearch,
   AllianceInfo,
   AllPlayers,
   BuildableUnit,
@@ -17,6 +18,8 @@ import {
   PlayerProfile,
   PlayerType,
   Relation,
+  ResearchStatus,
+  ResearchType,
   Structures,
   Team,
   TerraNullius,
@@ -34,6 +37,14 @@ import {
 import { ReadonlyTileSet } from "@openfront/engine-api/game/ReadViews";
 import { ClientID } from "@openfront/engine-api/Schemas";
 import { andFN, manhattanDistFN } from "@openfront/engine-lib/game/GameMapImpl";
+import {
+  armorLevel,
+  RESEARCH_DEFINITIONS,
+  researchApplies,
+  researchDefinition,
+  researchRequiredFor,
+  weaponsLevel,
+} from "@openfront/engine-lib/game/Research";
 import { TileSet } from "@openfront/engine-lib/game/TileSet";
 import { PseudoRandom } from "@openfront/engine-lib/PseudoRandom";
 import {
@@ -189,6 +200,9 @@ export class PlayerImpl implements Player {
 
   private lastDeleteUnitTick: Tick = -1;
   private lastEmbargoAllTick: Tick = -1;
+
+  private _completedResearch: ResearchType[] = [];
+  private _activeResearch: ActiveResearch | null = null;
 
   public _incomingAttacks: Attack[] = [];
   public _outgoingAttacks: Attack[] = [];
@@ -1463,6 +1477,9 @@ export class PlayerImpl implements Player {
     if (this.mg.config().isUnitDisabled(unitType)) {
       return false;
     }
+    if (!this.hasUnlocked(unitType)) {
+      return false;
+    }
     const cost = knownCost ?? this.mg.unitInfo(unitType).cost(this.mg, this);
     if (this._gold < cost) {
       return false;
@@ -1508,6 +1525,94 @@ export class PlayerImpl implements Player {
     this.removeGold(cost);
     unit.increaseLevel();
     this.recordUnitConstructed(unit.type());
+  }
+
+  private researchApplies(): boolean {
+    return researchApplies(this.mg.config().researchEnabled(), this.type());
+  }
+
+  /** False while the structure still needs a tech this player lacks. */
+  private hasUnlocked(unitType: UnitType): boolean {
+    if (!this.researchApplies()) return true;
+    const required = researchRequiredFor(unitType);
+    return required === null || this.hasResearched(required);
+  }
+
+  hasResearched(type: ResearchType): boolean {
+    return this._completedResearch.includes(type);
+  }
+
+  completedResearch(): ResearchType[] {
+    return [...this._completedResearch];
+  }
+
+  activeResearch(): ActiveResearch | null {
+    return this._activeResearch === null ? null : { ...this._activeResearch };
+  }
+
+  researchSpeed(): number {
+    let speed = 0;
+    for (const lab of this.units(UnitType.ResearchLab)) {
+      if (!lab.isUnderConstruction()) speed += lab.level();
+    }
+    return speed;
+  }
+
+  canStartResearch(type: ResearchType): boolean {
+    if (!this.researchApplies() || !this.isAlive()) return false;
+    if (this._activeResearch !== null || this.hasResearched(type)) {
+      return false;
+    }
+    const def = researchDefinition(type);
+    if (!def.requires.every((r) => this.hasResearched(r))) return false;
+    if (this.units(UnitType.ResearchLab).length === 0) return false;
+    return this._gold >= this.mg.config().researchCost(this, type);
+  }
+
+  startResearch(type: ResearchType): boolean {
+    if (!this.canStartResearch(type)) return false;
+    this.removeGold(this.mg.config().researchCost(this, type));
+    this._activeResearch = {
+      type,
+      progress: 0,
+      required: researchDefinition(type).points,
+    };
+    return true;
+  }
+
+  tickResearch(): void {
+    const active = this._activeResearch;
+    if (active === null) return;
+    active.progress += this.researchSpeed();
+    if (active.progress >= active.required) {
+      this._completedResearch.push(active.type);
+      this._activeResearch = null;
+    }
+  }
+
+  weaponsLevel(): number {
+    if (!this.researchApplies()) return 0;
+    return weaponsLevel((t) => this.hasResearched(t));
+  }
+
+  armorLevel(): number {
+    if (!this.researchApplies()) return 0;
+    return armorLevel((t) => this.hasResearched(t));
+  }
+
+  researchStatus(): ResearchStatus {
+    const config = this.mg.config();
+    return {
+      completed: this.completedResearch(),
+      active: this.activeResearch(),
+      speed: this.researchSpeed(),
+      options: RESEARCH_DEFINITIONS.map((d) => ({
+        type: d.type,
+        cost: config.researchCost(this, d.type),
+        canStart: this.canStartResearch(d.type),
+        completed: this.hasResearched(d.type),
+      })),
+    };
   }
 
   public buildableUnits(
@@ -1630,6 +1735,7 @@ export class PlayerImpl implements Player {
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
+      case UnitType.ResearchLab:
         return this.landBasedStructureSpawn(targetTile, validTiles);
       default:
         assertNever(unitType);
@@ -2034,6 +2140,9 @@ export class PlayerImpl implements Player {
       numUnitsConstructed: Object.entries(this.numUnitsConstructed).map(
         ([type, n]) => [type as UnitType, n],
       ),
+      completedResearch: [...this._completedResearch],
+      activeResearch:
+        this._activeResearch === null ? null : { ...this._activeResearch },
     };
   }
 
@@ -2107,13 +2216,24 @@ export class PlayerImpl implements Player {
         }
       : (box as null);
     this.numUnitsConstructed = Object.fromEntries(s.numUnitsConstructed);
+    this._completedResearch = [...s.completedResearch];
+    this._activeResearch =
+      s.activeResearch === null ? null : { ...s.activeResearch };
     this.nearbyMemo = null;
   }
 }
 
 export const PlayerSnapshot = snapshotType({
   name: "Player",
-  version: 1,
+  version: 2,
+  migrations: {
+    // v2 adds research; an older game had none.
+    1: (d) => ({
+      ...(d as object),
+      completedResearch: [],
+      activeResearch: null,
+    }),
+  },
   schema: z.object({
     smallID: zInt(),
     info: PlayerInfoSchema,
@@ -2177,6 +2297,14 @@ export const PlayerSnapshot = snapshotType({
       .nullable()
       .optional(),
     numUnitsConstructed: z.array(z.tuple([UnitTypeSchema, zInt()])),
+    completedResearch: z.array(z.enum(ResearchType)),
+    activeResearch: z
+      .object({
+        type: z.enum(ResearchType),
+        progress: zInt(),
+        required: zInt(),
+      })
+      .nullable(),
   }),
 });
 export type PlayerState = z.infer<typeof PlayerSnapshot.schema>;

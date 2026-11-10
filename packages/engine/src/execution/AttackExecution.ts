@@ -383,6 +383,7 @@ export class AttackExecution implements Execution {
       attacker: {
         type: this._owner.type(),
         numTiles: this._owner.numTilesOwned(),
+        weaponsLevel: this._owner.weaponsLevel(),
       },
       defender:
         defender === null
@@ -394,6 +395,7 @@ export class AttackExecution implements Execution {
               isTraitor: defender.isTraitor(),
               isDisconnectedTeammate:
                 defender.isDisconnected() && this._owner.isOnSameTeam(defender),
+              armorLevel: defender.armorLevel(),
             },
       defenderHasDefensePost,
       falloutRatio: this.mg.hasFallout(tile)

@@ -33,6 +33,7 @@ import {
   mirvIcon,
   missileSiloIcon,
   portIcon,
+  researchLabIcon,
   samLauncherIcon,
   warshipIcon,
 } from "../HotbarIcons";
@@ -55,6 +56,7 @@ export class UnitDisplay extends LitElement implements Controller {
   private _cities = 0;
   private _warships = 0;
   private _factories = 0;
+  private _researchLabs = 0;
   private _missileSilo = 0;
   private _port = 0;
   private _defensePost = 0;
@@ -461,6 +463,7 @@ export class UnitDisplay extends LitElement implements Controller {
     this._defensePost = player.totalUnitLevels(UnitType.DefensePost);
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
+    this._researchLabs = player.totalUnitLevels(UnitType.ResearchLab);
     this._warships = player.totalUnitLevels(UnitType.Warship);
     this.requestUpdate();
   }
@@ -571,6 +574,13 @@ export class UnitDisplay extends LitElement implements Controller {
               UnitType.MIRV,
               "mirv",
               this.getHotkey("buildMIRV", "Digit0"),
+            )}
+            ${this.renderUnitItem(
+              researchLabIcon,
+              this._researchLabs,
+              UnitType.ResearchLab,
+              "research_lab",
+              "",
             )}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { GameMap, TileRef } from "@openfront/engine-api/game/GameMap";
 import {
+  ActiveResearch,
   AllianceInfo,
   AllPlayers,
   BuildableUnit,
@@ -17,6 +18,8 @@ import {
   PlayerProfile,
   PlayerType,
   Relation,
+  ResearchStatus,
+  ResearchType,
   SamLauncherState,
   SpawnArea,
   Team,
@@ -107,6 +110,8 @@ export interface UnitParamsMap {
   };
 
   [UnitType.Factory]: Record<string, never>;
+
+  [UnitType.ResearchLab]: Record<string, never>;
 
   [UnitType.MissileSilo]: Record<string, never>;
 
@@ -423,6 +428,23 @@ export interface Player extends PlayerLike {
   canUpgradeUnit(unit: Unit): boolean;
   upgradeUnit(unit: Unit): void;
   captureUnit(unit: Unit): void;
+
+  // Research (only when GameConfig.research is on; see engine-lib/game/Research)
+  hasResearched(type: ResearchType): boolean;
+  /** Completed research, in the order it finished. */
+  completedResearch(): ResearchType[];
+  activeResearch(): ActiveResearch | null;
+  /** Progress points gained per tick: summed levels of finished labs. */
+  researchSpeed(): number;
+  canStartResearch(type: ResearchType): boolean;
+  startResearch(type: ResearchType): boolean;
+  /** Advances the active research by one tick. */
+  tickResearch(): void;
+  researchStatus(): ResearchStatus;
+  /** Weapons upgrades researched (0-3). */
+  weaponsLevel(): number;
+  /** Armor upgrades researched (0-3). */
+  armorLevel(): number;
 
   // Relations & Diplomacy
   nearby(): (Player | TerraNullius)[];
