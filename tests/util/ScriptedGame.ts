@@ -6,6 +6,7 @@ import {
   GameMapType,
   GameMode,
   GameType,
+  ResearchType,
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
 import {
@@ -231,6 +232,7 @@ function queuedIntent(game: Game, p: Player, tick: number): Intent | null {
     },
     { type: "mark_disconnected", isDisconnected: false },
     { type: "toggle_pause", paused: false },
+    { type: "research", research: ResearchType.Weapons1 },
   ];
   return queued[(tick - 20) / 2] ?? null;
 }

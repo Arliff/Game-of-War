@@ -39,7 +39,9 @@ function makeDisplay(
     myPlayer: () => player,
     inSpawnPhase: () => false,
     config: () => ({
-      isUnitDisabled: (unitType: UnitType) => disabledUnits.includes(unitType),
+      // Like the real Config: the Research Lab only exists in research games.
+      isUnitDisabled: (unitType: UnitType) =>
+        unitType === UnitType.ResearchLab || disabledUnits.includes(unitType),
       gameConfig: () => ({ tutorial }),
     }),
   } as any;
@@ -119,9 +121,10 @@ describe("mobile UnitDisplay layout", () => {
       await display.updateComplete;
 
       const grid = display.querySelector<HTMLElement>(".unit-display-grid");
-      expect(grid?.children).toHaveLength(BuildMenus.types.length - 1);
+      // City is disabled here and the Research Lab is off outside research games.
+      expect(grid?.children).toHaveLength(BuildMenus.types.length - 2);
       expect(grid?.style.getPropertyValue("--unit-display-columns")).toBe(
-        String(BuildMenus.types.length - 1),
+        String(BuildMenus.types.length - 2),
       );
       expect(grid?.classList.contains("lg:grid-cols-none")).toBe(true);
       expect(grid?.classList.contains("lg:auto-cols-max")).toBe(true);
